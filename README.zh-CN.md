@@ -19,7 +19,7 @@
 
 ## 编辑器预览
 
-[![SlideKit 在 Chrome 中的实际界面：缩略图、画布、文字工具栏和属性面板](docs/images/editor.png)](docs/images/editor.png)
+[![SlideKit 在 Chrome 中的实际界面：缩略图、画布、文字工具栏和属性面板](docs/images/editor-v0.1.1.png)](docs/images/editor-v0.1.1.png)
 
 *SlideKit v0.1.1 在本机 Chrome 中的实际截图，使用项目自带的示例文稿。点击截图可查看原图。编辑器目前采用中文界面，文档提供中英文版本。*
 
