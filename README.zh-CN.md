@@ -17,9 +17,11 @@
 
 </div>
 
-![SlideKit 在 Chrome 中的实际界面：缩略图、画布、文字工具栏和属性面板](docs/images/editor.png)
+## 编辑器预览
 
-*自带演示页的 Chrome 实际截图。编辑器目前采用中文界面，文档提供中英文版本。*
+[![SlideKit 在 Chrome 中的实际界面：缩略图、画布、文字工具栏和属性面板](docs/images/editor.png)](docs/images/editor.png)
+
+*SlideKit v0.1.1 在本机 Chrome 中的实际截图，使用项目自带的示例文稿。点击截图可查看原图。编辑器目前采用中文界面，文档提供中英文版本。*
 
 ## 在自己的产品里完成演示创作
 

@@ -17,9 +17,11 @@ English · [简体中文](README.zh-CN.md)
 
 </div>
 
-![SlideKit running in Chrome: slide thumbnails, canvas, formatting toolbar and inspector](docs/images/editor.png)
+## Editor preview
 
-*Actual Chrome capture of the included demo. The editor UI is currently Chinese; documentation is available in English and Chinese.*
+[![SlideKit running in Chrome: slide thumbnails, canvas, formatting toolbar and inspector](docs/images/editor.png)](docs/images/editor.png)
+
+*SlideKit v0.1.1 captured in desktop Chrome using the included sample deck. Click the screenshot to view it at full size. The editor UI is currently Chinese; documentation is available in English and Chinese.*
 
 ## Build presentations inside your product
 
