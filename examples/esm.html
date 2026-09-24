@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SlideKit · ESM 接入示例</title>
+  <link rel="stylesheet" href="../dist/slidekit.css">
+  <link rel="stylesheet" href="./host.css">
+</head>
+<body>
+  <header class="host-header">
+    <div><a href="../">SlideKit</a><h1>ESM 接入</h1><p>浏览器直接加载构建产物；宿主负责容器、保存和实例生命周期。</p></div>
+    <a href="./iife.html">查看 script 示例 →</a>
+  </header>
+  <main id="examples"></main>
+  <script src="./host.js"></script>
+  <script type="module">
+    import * as SlideKit from '../dist/slidekit.js';
+    mountSlideKitDemo(SlideKit);
+  </script>
+</body>
+</html>

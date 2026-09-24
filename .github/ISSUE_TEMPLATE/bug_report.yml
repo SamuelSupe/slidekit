@@ -1,0 +1,23 @@
+name: Bug report / 缺陷报告
+description: Report a reproducible editor or import/export problem / 提交可复现问题
+title: '[Bug] '
+body:
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction / 复现步骤
+      description: Include expected and actual behavior. Use synthetic files, not confidential documents. / 请说明预期与实际结果，使用合成样例，勿上传保密文稿。
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment / 环境
+      description: Release, browser, OS, ESM or script, relevant import warnings / 版本、浏览器、系统、接入方式及兼容性提示
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence / 证据
+      description: Redacted screenshots, console errors, or a minimal synthetic file / 脱敏截图、控制台错误或最小合成文件

@@ -1,0 +1,93 @@
+{
+  "name": "@local/slidekit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Embeddable JavaScript slide editor with editable PowerPoint export",
+  "type": "module",
+  "main": "./dist/slidekit.js",
+  "module": "./dist/slidekit.js",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/slidekit.js",
+      "default": "./dist/slidekit.js"
+    },
+    "./style.css": "./dist/slidekit.css",
+    "./iife": "./dist/slidekit.iife.js"
+  },
+  "files": [
+    "dist/slidekit.js",
+    "dist/slidekit.iife.js",
+    "dist/slidekit.css",
+    "dist/types",
+    "dist/pdf-assets",
+    "README.md",
+    "VALIDATION.md",
+    "examples",
+    "dist/THIRD_PARTY_NOTICES.txt",
+    "README.zh-CN.md",
+    "VALIDATION.zh-CN.md",
+    "docs",
+    "LICENSE",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "SECURITY.md"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 5182",
+    "preview": "vite preview --config vite.demo.config.js --host 0.0.0.0 --port 5183",
+    "build": "node scripts/build.mjs && tsc -p tsconfig.json",
+    "build:demo": "npm run build && vite build --config vite.demo.config.js && node scripts/copy-demo.mjs",
+    "test": "node --test test/*.test.js",
+    "prepack": "npm run build",
+    "check:package": "node scripts/check-package.mjs"
+  },
+  "devDependencies": {
+    "@tiptap/core": "3.31.3",
+    "@tiptap/extension-text-align": "3.31.3",
+    "@tiptap/extension-text-style": "3.31.3",
+    "@tiptap/pm": "3.31.3",
+    "@tiptap/starter-kit": "3.31.3",
+    "@xmldom/xmldom": "0.9.12",
+    "image-size": "2.0.4",
+    "jszip": "3.10.2",
+    "lucide": "1.47.0",
+    "moveable": "0.53.0",
+    "pdfjs-dist": "6.3.289",
+    "pptxgenjs": "4.0.1",
+    "selecto": "1.26.3",
+    "typescript": "5.9.3",
+    "vite": "7.3.6"
+  },
+  "overrides": {
+    "pptxgenjs": {
+      "image-size": "2.0.4"
+    }
+  },
+  "license": "MIT",
+  "author": "SamuelSupe",
+  "homepage": "https://github.com/SamuelSupe/slidekit#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SamuelSupe/slidekit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SamuelSupe/slidekit/issues"
+  },
+  "keywords": [
+    "slides",
+    "presentation",
+    "editor",
+    "pptx",
+    "pdf",
+    "javascript",
+    "embeddable"
+  ],
+  "engines": {
+    "node": ">=22.13.0"
+  }
+}

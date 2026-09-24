@@ -1,0 +1,14 @@
+body { margin: 0; background: #f3f4f8; color: #202634; font: 14px/1.6 system-ui, sans-serif; }
+.host-header { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 24px; }
+.host-header h1 { font-size: 24px; margin: 4px 0; }
+.host-header p { color: #717989; margin: 0; }
+.host-header a { color: #5654c5; text-decoration: none; }
+#examples { display: grid; grid-template-columns: minmax(720px, 1fr) 450px; gap: 20px; padding: 0 24px 24px; }
+.host-card { min-width: 0; background: #fff; border: 1px solid #e1e4ed; border-radius: 12px; overflow: hidden; }
+.host-card h2 { font-size: 14px; margin: 14px 16px; }
+.host-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 14px; }
+.host-actions button { border: 1px solid #dcdfea; background: #fff; color: #474e5d; border-radius: 5px; padding: 7px 10px; cursor: pointer; }
+.host-editor { height: 650px; border-block: 1px solid #e8eaf0; }
+.host-report { margin: 0; padding: 12px 16px; color: #646d80; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.host-input { display: block; margin: 0 16px 16px; width: calc(100% - 50px); border: 1px solid #dcdfea; padding: 8px; border-radius: 5px; }
+@media (max-width: 1240px) { #examples { grid-template-columns: minmax(0, 1fr); } .host-card:last-child { max-width: 650px; } }

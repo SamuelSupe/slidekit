@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SlideKit · script 接入示例</title>
+  <link rel="stylesheet" href="../dist/slidekit.css">
+  <link rel="stylesheet" href="./host.css">
+</head>
+<body>
+  <header class="host-header">
+    <div><a href="../">SlideKit</a><h1>普通 script 接入</h1><p>同页两个独立实例。右侧使用窄容器，点击面板按钮可展开侧栏。</p></div>
+    <a href="./esm.html">查看 ESM 示例 →</a>
+  </header>
+  <main id="examples"></main>
+  <script src="../dist/slidekit.iife.js"></script>
+  <script src="./host.js"></script>
+  <script>mountSlideKitDemo(SlideKit);</script>
+</body>
+</html>
