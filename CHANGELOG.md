@@ -1,5 +1,23 @@
 # Changelog / 变更记录
 
+## 0.1.1 — 2026-09-25
+
+### English
+
+- Remove the second full-document copy from each edit while preserving complete validation, atomic rejection and undo history isolation.
+- Share immutable image data across snapshots and clipboards, copy mutable metadata independently, and deduplicate shared image resources during selection copying.
+- Keep host patches and clipboard metadata independent from committed documents, including asset IDs such as `toString`.
+- A synthetic 100-page, 2,000-element benchmark reduced median core commit time from 8.69 ms to 5.09 ms (about 41%). This measures the data layer, excluding browser rendering; see [validation](VALIDATION.md).
+- Verified with 39 tests, ESM/IIFE builds, strict consumer types and native Chrome editing, clipboard, history and remount checks. The public API and document schema are unchanged.
+
+### 简体中文
+
+- 移除每次编辑的第二次整稿复制，保留完整校验、失败原子拒绝与撤销历史隔离。
+- 快照与剪贴板共享不可变图片数据，独立复制可变元数据；多选复制时对共享图片资源去重。
+- 保持宿主传入补丁、剪贴板元数据与已提交文稿相互独立，兼容 `toString` 等资源 ID。
+- 100 页、2,000 个元素的合成基准中，核心提交耗时中位数由 8.69 ms 降至 5.09 ms，约减少 41%。此数据不包含浏览器渲染，详见[验证记录](VALIDATION.zh-CN.md)。
+- 通过 39 项测试、ESM／IIFE 构建、严格消费端类型检查，以及本机 Chrome 编辑、复制粘贴、历史和重挂验证。公开 API 与文稿结构版本保持不变。
+
 ## 0.1.0 — 2026-09-25
 
 ### English

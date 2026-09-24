@@ -19,6 +19,13 @@ export const clone = value => structuredClone(value);
 export const isColor = value => typeof value === 'string' && COLOR.test(value);
 export const isFontFamily = value => typeof value === 'string' && FONT.test(value);
 
+/** Own metadata while sharing immutable image strings across snapshots and clipboards. */
+export function cloneAsset(asset) {
+  if (!asset || typeof asset.data !== 'string') return clone(asset);
+  const { data, ...metadata } = asset;
+  return { ...clone(metadata), data };
+}
+
 /** Own every mutable field while sharing immutable image strings across history snapshots. */
 export function cloneDocument(input) {
   const { assets, ...rest } = input;
@@ -27,11 +34,7 @@ export function cloneDocument(input) {
     doc.assets = clone(assets);
     return doc;
   }
-  doc.assets = Object.fromEntries(Object.entries(assets).map(([id, asset]) => {
-    if (!asset || typeof asset.data !== 'string') return [id, clone(asset)];
-    const { data, ...metadata } = asset;
-    return [id, { ...clone(metadata), data }];
-  }));
+  doc.assets = Object.fromEntries(Object.entries(assets).map(([id, asset]) => [id, cloneAsset(asset)]));
   return doc;
 }
 
@@ -172,7 +175,12 @@ export function validateText(root) {
  */
 export function validateDocument(input) {
   check(input && input.schemaVersion === 1, '不支持的文稿版本（需要 schemaVersion: 1）');
-  const doc = cloneDocument(input);
+  return validateDocumentInPlace(cloneDocument(input));
+}
+
+/** @internal Mutates an owned draft; discard the draft if validation fails. */
+export function validateDocumentInPlace(doc) {
+  check(doc && doc.schemaVersion === 1, '不支持的文稿版本（需要 schemaVersion: 1）');
   check(typeof doc.title === 'string' && doc.title.length <= 500, '文稿标题无效');
   number(doc.width, '页面宽度', 100, 10000);
   number(doc.height, '页面高度', 100, 10000);

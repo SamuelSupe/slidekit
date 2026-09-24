@@ -12,10 +12,10 @@ npm test
 npm run build       # dist/ library bundles and declarations
 npm run build:demo  # site/ static demo, library and examples
 npm run preview    # http://localhost:5183
-npm pack           # local-slidekit-0.1.0.tgz
+npm pack           # local-slidekit-0.1.1.tgz
 ```
 
-Install the release tarball with `npm install ./local-slidekit-0.1.0.tgz`. The package name is `@local/slidekit`; no npm registry publication is implied. Serve examples over HTTP(S); `file://` cannot load browser ES modules. The static site supports deployment under a subdirectory.
+Install the release tarball with `npm install ./local-slidekit-0.1.1.tgz`. The package name is `@local/slidekit`; no npm registry publication is implied. Serve examples over HTTP(S); `file://` cannot load browser ES modules. The static site supports deployment under a subdirectory.
 
 ### ESM
 

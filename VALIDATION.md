@@ -2,18 +2,23 @@
 
 English · [简体中文](VALIDATION.zh-CN.md) · [Home](README.md)
 
-This records observed evidence for the 0.1.0 release, not a promise of complete Office compatibility.
+This records observed evidence for the 0.1.1 release and labels earlier browser checks separately. It is not a promise of complete Office compatibility.
 
 ## Automated checks — 2026-09-25
 
 Environment: Node.js 24 in OrbStack (`node:24-bookworm`).
 
-- **38 tests passed:** JSON ownership and round trips, image restoration/pruning, IDs, atomic rejection, history/coalescing, geometry, PDF limits, PPTX parsing and native editable export.
+- **39 tests passed:** JSON ownership and round trips, image restoration/pruning, IDs, atomic rejection, history/coalescing, geometry, PDF limits, PPTX parsing and native editable export.
+- The optimization regression checks mutate host patches and clipboard metadata after committing, verify independent undo/redo snapshots, and exercise image copying with a `toString` asset ID.
 - Regression cases cover broken/SVG-only image references, transparency, gradients, shadows, hidden objects/slides, elbow connectors, line breaks, pasted rich text and rejected-draft recovery.
 - Release review adds host callback failure isolation (sync/async), XML-invalid characters in PPTX, image insertion during document reload, and the save shortcut during text editing/read-only mode.
 - Dependency audit: **0 known advisories** at review time. The first container audit encountered a local certificate-chain error; it was rerun with native Node using the system trust store. TLS verification was not disabled. Advisory results can change.
 
 Commands: `npm test`, `npm run build:demo`, `npm run check:package`. CI repeats tests, builds and installable-package TypeScript checks on Node 24. Check the [CI run](https://github.com/SamuelSupe/slidekit/actions/workflows/ci.yml) for the published commit.
+
+## Performance sample — 2026-09-25
+
+On Node.js 24.19.0, Linux arm64 in OrbStack, a synthetic deck with 100 pages and 20 elements per page was edited by changing one element's position. Seven rounds alternated the previous and optimized implementations, with eight warm-up edits and 30 measured edits per round. Median core commit time fell from **8.69 ms to 5.09 ms (about 41%)**. This measures document processing without DOM rendering or import/export; it is not an end-to-end latency or maximum-capacity guarantee.
 
 ## Browser evidence
 
@@ -23,7 +28,14 @@ Earlier completed checks covered multi-page editing, Chinese text, local formatt
 
 The preceding fix round verified hidden-page playback, independent transparency, invisible lines, list-paste recovery and keyboard focus after player controls in built ESM and IIFE examples. It inspected actual downloaded JSON/PPTX, not just generated test fixtures.
 
-### Release checks — 2026-09-25
+### 0.1.1 optimization checks — 2026-09-25
+
+- Built ESM: Chinese text and bold formatting, consecutive undo/redo, image insertion, shared-image selection copying and cross-instance paste. All pasted images finished decoding; the other instance remained unchanged until explicitly targeted.
+- Deleting all ten objects and undoing restored all four image objects. Loading a saved snapshot and destroying/remounting retained all ten objects and the second instance's seven objects.
+- Built IIFE: adding a page, undo/redo and destroy/remount retained the expected page counts; the second instance stayed at one page and two objects.
+- Both examples ran in native Chrome at 1512×861 with no relevant console errors or warnings. The version bump and documentation changes do not alter these flows.
+
+### 0.1.0 release checks — 2026-09-25
 
 - Built **ESM and IIFE**: injected synchronous/asynchronous host save failures; later subscribers and undo/redo kept working. A pending image could not enter a reloaded deck with identical slide IDs. Control-character text exported, reopened, and retained valid Chinese/emoji while leaving the source JSON unchanged. Destroy/remount and the second read-only instance remained independent.
 - Actual **Cmd+S while editing** downloaded JSON containing the current Chinese/English draft. Reopening that file restored all three objects; the second instance stayed at two objects with zero changes.

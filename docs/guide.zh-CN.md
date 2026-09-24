@@ -20,7 +20,7 @@ npm test          # 文档、历史、几何和 PPTX 边界测试
 npm run build    # dist/ ESM、IIFE、CSS、类型声明
 npm run build:demo # 完整静态站点 site/，含打包产物接入示例
 npm run preview  # 在 5183 端口预览 site/ 静态产物
-npm pack         # local-slidekit-0.1.0.tgz；包含构建产物及示例
+npm pack         # local-slidekit-0.1.1.tgz；包含构建产物及示例
 ```
 
 `site/` 可放到任意静态 HTTP(S) 服务，支持子目录部署，无后端服务。请通过 HTTP(S) 打开示例，浏览器不支持用 `file://` 直接加载 ES module。
@@ -28,7 +28,7 @@ npm pack         # local-slidekit-0.1.0.tgz；包含构建产物及示例
 本地包名暂定为 `@local/slidekit`，尚未发布 npm。安装本地 tarball 或项目目录：
 
 ```sh
-npm install /path/to/local-slidekit-0.1.0.tgz
+npm install /path/to/local-slidekit-0.1.1.tgz
 ```
 
 ### npm / ESM

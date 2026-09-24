@@ -1,4 +1,4 @@
-import { clone, cloneDocument, createDocument, createElement, emptySlide, uid, validateDocument } from './document.js';
+import { clone, cloneAsset, cloneDocument, createDocument, createElement, emptySlide, uid, validateDocument, validateDocumentInPlace } from './document.js';
 import { History } from './history.js';
 
 function removeUnusedAssets(doc) {
@@ -73,7 +73,7 @@ export class DocumentStore {
     update(next);
     // Prune only the new owned document. History snapshots still own the assets
     // required to undo deletion or replacement of the last referencing image.
-    const validated = removeUnusedAssets(validateDocument(next));
+    const validated = removeUnusedAssets(validateDocumentInPlace(next));
     this.history.record(before, group);
     this.doc = validated;
     after?.();
@@ -98,7 +98,7 @@ export class DocumentStore {
     this.emit('modeChange', { mode });
   }
   updateDocument(patch) {
-    this.commit(doc => Object.assign(doc, patch), 'document');
+    this.commit(doc => Object.assign(doc, clone(patch)), 'document');
   }
   addSlide(properties = {}, index = this.doc.slides.findIndex(slide => slide.id === this.slideId) + 1) {
     const slide = { ...emptySlide(), ...clone(properties), id: uid(), elements: [] };
@@ -162,7 +162,7 @@ export class DocumentStore {
       ...properties, assetId,
     });
     this.commit(doc => {
-      doc.assets[assetId] = clone(asset);
+      doc.assets[assetId] = cloneAsset(asset);
       doc.slides.find(slide => slide.id === this.slideId).elements.push(element);
     }, 'add-image', null, () => { this.selected = [element.id]; });
     return element.id;
@@ -204,7 +204,9 @@ export class DocumentStore {
   copySelection() {
     const elements = clone(this.elements);
     const assets = {};
-    for (const element of elements) if (element.type === 'image') assets[element.assetId] = clone(this.doc.assets[element.assetId]);
+    for (const element of elements) {
+      if (element.type === 'image' && !Object.hasOwn(assets, element.assetId)) assets[element.assetId] = cloneAsset(this.doc.assets[element.assetId]);
+    }
     return { elements, assets };
   }
   pasteSelection(clipboard) {
@@ -215,10 +217,12 @@ export class DocumentStore {
     for (const element of elements) {
       element.id = uid(); element.x += 24; element.y += 24; element.locked = false;
       if (element.type === 'image') {
-        if (!remap.has(element.assetId)) remap.set(element.assetId, uid());
-        const next = remap.get(element.assetId);
-        assets[next] = clipboard.assets[element.assetId];
-        element.assetId = next;
+        if (!remap.has(element.assetId)) {
+          const next = uid();
+          remap.set(element.assetId, next);
+          assets[next] = cloneAsset(clipboard.assets[element.assetId]);
+        }
+        element.assetId = remap.get(element.assetId);
       }
     }
     const ids = elements.map(element => element.id);

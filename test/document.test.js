@@ -121,15 +121,25 @@ test('pasted empty or unsupported font attributes cannot discard otherwise valid
 });
 
 test('copying across documents retains images and assigns independent identities', () => {
-  const source = new DocumentStore();
-  const id = source.addImageAsset(image);
+  const doc = createDocument();
+  doc.assets.toString = image;
+  const original = createElement('image', { assetId: 'toString' });
+  doc.slides[0].elements.push(original);
+  const source = new DocumentStore(doc);
+  const id = original.id;
   source.selectElements([id]);
   const destination = new DocumentStore();
-  destination.pasteSelection(source.copySelection());
+  const clipboard = source.copySelection();
+  const sourceAsset = clipboard.assets[source.slide.elements[0].assetId];
+  sourceAsset.metadata = { tags: ['original'] };
+  destination.pasteSelection(clipboard);
+  sourceAsset.data = 'changed by clipboard owner';
+  sourceAsset.metadata.tags.push('changed');
   const pasted = destination.slide.elements[0];
   assert.notEqual(pasted.id, id);
   assert.notEqual(pasted.assetId, source.slide.elements[0].assetId);
   assert.equal(destination.doc.assets[pasted.assetId].data, png);
+  assert.deepEqual(destination.doc.assets[pasted.assetId].metadata.tags, ['original']);
   assert.equal(pasted.x, source.slide.elements[0].x + 24);
   const duplicate = destination.duplicateSlide();
   assert.notEqual(destination.slide.elements[0].id, pasted.id);
@@ -139,6 +149,24 @@ test('copying across documents retains images and assigns independent identities
   assert.equal(destination.slide.elements.length, 0);
   destination.undo();
   assert.equal(destination.slide.elements.length, 1);
+});
+
+test('committed patches own nested input and keep previous history independent', () => {
+  const store = new DocumentStore();
+  const patch = { metadata: { tags: ['original'] } };
+  store.updateDocument(patch);
+  patch.metadata.tags.push('changed outside');
+  const id = store.addElement('text');
+  const content = paragraph('保存草稿');
+  store.updateElement(id, { content });
+  content.content[0].content[0].text = 'changed outside';
+  const committed = store.getDocument();
+  assert.deepEqual(committed.metadata.tags, ['original']);
+  assert.equal(plainText(committed.slides[0].elements[0].content), '保存草稿');
+  store.undo();
+  assert.equal(plainText(store.slide.elements[0].content), '双击编辑文字');
+  store.redo();
+  assert.deepEqual(store.getDocument(), committed);
 });
 
 test('unused images leave saved documents while shared references, undo and clipboard retain them', () => {

@@ -49,10 +49,10 @@ npm run dev
 
 ### 引入前端库
 
-从 [Releases](https://github.com/SamuelSupe/slidekit/releases/latest) 下载 `local-slidekit-0.1.0.tgz`：
+从 [Releases](https://github.com/SamuelSupe/slidekit/releases/latest) 下载 `local-slidekit-0.1.1.tgz`：
 
 ```sh
-npm install ./local-slidekit-0.1.0.tgz
+npm install ./local-slidekit-0.1.1.tgz
 ```
 
 安装后的包名为 `@local/slidekit`，**尚未发布到 npm registry**。

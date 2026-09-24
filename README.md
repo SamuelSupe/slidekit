@@ -49,10 +49,10 @@ Open **http://localhost:5182**. Use `npm run build:demo` and `npm run preview` t
 
 ### Embed the library
 
-Download `local-slidekit-0.1.0.tgz` from [Releases](https://github.com/SamuelSupe/slidekit/releases/latest), then install it:
+Download `local-slidekit-0.1.1.tgz` from [Releases](https://github.com/SamuelSupe/slidekit/releases/latest), then install it:
 
 ```sh
-npm install ./local-slidekit-0.1.0.tgz
+npm install ./local-slidekit-0.1.1.tgz
 ```
 
 The package name is `@local/slidekit`; it is **not published to the npm registry**.
