@@ -11,23 +11,27 @@ import { exportPptx } from './pptx.js';
 import { readPdf, resolvePdfLimits } from './pdf.js';
 import { readPptx } from './pptx-import.js';
 import { createImportDialog } from './import-dialog.js';
+import { createTranslator, translateMessage, SUPPORTED_LOCALES } from './i18n.js';
 
 let clipboard = null;
 
 export class SlideEditor {
   constructor(container, options = {}) {
     if (!(container instanceof HTMLElement)) throw new TypeError('container 必须是 HTMLElement');
+    this.locale = options.locale === undefined ? 'zh-CN' : options.locale;
+    this.t = createTranslator(this.locale);
     this.options = options;
     this.pdfLimits = resolvePdfLimits(options.pdfLimits);
-    this.store = new DocumentStore(options.document, options.mode);
+    this.store = new DocumentStore(options.document, options.mode, (...args) => this.t(...args));
     this.destroyed = false;
     this.zoom = 1;
     this.autoFit = true;
     this.abort = new AbortController();
     this.root = dom('div', 'slidekit');
+    this.root.lang = this.locale;
     this.root.tabIndex = 0;
     this.root.setAttribute('role', 'region');
-    this.root.setAttribute('aria-label', 'SlideKit 幻灯片编辑器');
+    this.root.setAttribute('aria-label', this.t('SlideKit 幻灯片编辑器'));
     if (options.theme?.accent) {
       if (!isColor(options.theme.accent)) throw new Error('主题色须为六位十六进制颜色');
       this.root.style.setProperty('--sk-accent', options.theme.accent);
@@ -37,7 +41,7 @@ export class SlideEditor {
     this.stage = dom('div', 'sk-stage-wrap');
     this.world = dom('div', 'sk-world');
     this.canvas = dom('div', 'sk-slide');
-    this.canvas.setAttribute('aria-label', '幻灯片画布');
+    this.canvas.setAttribute('aria-label', this.t('幻灯片画布'));
     this.world.append(this.canvas);
     this.stage.append(this.world);
     this.viewport.append(this.stage);
@@ -100,14 +104,55 @@ export class SlideEditor {
   report(error) {
     if (this.destroyed) return;
     this.notify(error.message || String(error));
-    this.store.emit('error', { error, message: error.message || String(error) });
+    this.store.emit('error', { error, message: this.message(error.message || String(error)) });
   }
+  message(message) { return translateMessage(message, this.t); }
   notify(message) {
     if (this.destroyed) return;
-    this.toast.textContent = message;
+    this.toastMessage = message;
+    this.toast.textContent = this.message(message);
     this.toast.classList.add('sk-visible');
     clearTimeout(this.toastTimer);
     this.toastTimer = setTimeout(() => this.toast.classList.remove('sk-visible'), 3500);
+  }
+  setLocale(locale) {
+    if (!SUPPORTED_LOCALES.includes(locale)) throw new TypeError(this.t('不支持的界面语言：{locale}', { locale: String(locale) }));
+    const t = createTranslator(locale);
+    if (locale === this.locale) return;
+    this.locale = locale;
+    this.t = t;
+    this.root.lang = locale;
+    this.importDialog?.refresh();
+    this.refreshLocale();
+  }
+  refreshLocale() {
+    if (this.destroyed) return;
+    const active = document.activeElement;
+    // Let native form edits (including IME) finish before replacing their controls.
+    // The slide's contenteditable node is never recreated by a language change.
+    if (this.documentImport || (this.root.contains(active) && !this.canvas.contains(active) && active.matches('input,select,textarea'))) {
+      this.localePending = true;
+      return;
+    }
+    this.localePending = false;
+    this.root.setAttribute('aria-label', this.t('SlideKit 幻灯片编辑器'));
+    this.canvas.setAttribute('aria-label', this.t('幻灯片画布'));
+    const previousToolbar = this.toolbar;
+    this.toolbar = new Toolbar(this);
+    previousToolbar.nodes.forEach((node, index) => {
+      this.toolbar.nodes[index].hidden = node.hidden;
+      node.replaceWith(this.toolbar.nodes[index]);
+    });
+    const status = this.createStatus();
+    this.status.replaceWith(status); this.status = status;
+    this.panels.renderThumbnails(); this.panels.renderInspector(); this.updateStatus();
+    if (this.text.editor) {
+      const props = this.text.editor.options.editorProps;
+      this.text.editor.setOptions({ editorProps: { ...props, attributes: { ...props.attributes, 'aria-label': this.t('编辑幻灯片文字') } } });
+    }
+    if (this.toastMessage) this.toast.textContent = this.message(this.toastMessage);
+    this.showImportWarnings(this.importWarnings || []);
+    this.renderPresentation();
   }
   createStatus() {
     const status = dom('footer', 'sk-status');
@@ -115,25 +160,25 @@ export class SlideEditor {
     this.selectionLabel = dom('span', 'sk-selection-label');
     const zoom = dom('div', 'sk-zoom');
     this.zoomLabel = button('100%', null, () => this.fit(), 'sk-zoom-label');
-    this.zoomLabel.title = '适应窗口';
+    this.zoomLabel.title = this.t('适应窗口');
     const slider = dom('input');
     slider.type = 'range'; slider.min = '10'; slider.max = '200'; slider.step = '5';
-    slider.setAttribute('aria-label', '画布缩放');
+    slider.setAttribute('aria-label', this.t('画布缩放'));
     slider.addEventListener('input', () => this.setZoom(Number(slider.value) / 100));
     this.zoomSlider = slider;
-    zoom.append(button('缩小', 'minus', () => this.setZoom(this.zoom - 0.1), 'sk-icon-only'), slider,
-      button('放大', 'plus', () => this.setZoom(this.zoom + 0.1), 'sk-icon-only'), this.zoomLabel,
-      button('适应窗口', 'fit', () => this.fit(), 'sk-icon-only'));
+    zoom.append(button(this.t('缩小'), 'minus', () => this.setZoom(this.zoom - 0.1), 'sk-icon-only'), slider,
+      button(this.t('放大'), 'plus', () => this.setZoom(this.zoom + 0.1), 'sk-icon-only'), this.zoomLabel,
+      button(this.t('适应窗口'), 'fit', () => this.fit(), 'sk-icon-only'));
     status.append(this.pageLabel, this.selectionLabel, zoom);
     return status;
   }
   updateStatus() {
     const index = this.store.doc.slides.findIndex(slide => slide.id === this.store.slideId);
-    this.pageLabel.textContent = '第 ' + (index + 1) + ' / ' + this.store.doc.slides.length + ' 页';
-    this.selectionLabel.textContent = this.store.selected.length ? '已选中 ' + this.store.selected.length + ' 个元素' :
+    this.pageLabel.textContent = this.t('第 {page} / {total} 页', { page: index + 1, total: this.store.doc.slides.length });
+    this.selectionLabel.textContent = this.store.selected.length ? this.t('已选中 {count} 个元素', { count: this.store.selected.length }) :
       [this.store.doc.width, this.store.doc.height].map(value => Math.round(value * 100) / 100).join(' × ');
     this.zoomLabel.firstChild.textContent = Math.round(this.zoom * 100) + '%';
-    this.zoomLabel.setAttribute('aria-label', Math.round(this.zoom * 100) + '%，点击适应窗口');
+    this.zoomLabel.setAttribute('aria-label', this.t('{zoom}%，点击适应窗口', { zoom: Math.round(this.zoom * 100) }));
     this.zoomSlider.value = String(Math.round(this.zoom * 100));
   }
   scheduleThumbnails() {
@@ -198,6 +243,9 @@ export class SlideEditor {
   }
   listen() {
     const signal = this.abort.signal;
+    this.root.addEventListener('focusout', () => {
+      if (this.localePending) queueMicrotask(() => this.refreshLocale());
+    }, { signal });
     this.root.addEventListener('pointerdown', event => this.run(() => {
       if (this.viewport.contains(event.target)) {
         const target = event.target.closest?.('[data-element-id]');
@@ -329,6 +377,7 @@ export class SlideEditor {
     const slideId = this.store.slideId;
     const loadVersion = this.store.loadVersion;
     const asset = await readImage(file);
+    if (!file.name) asset.name = this.t('图片');
     this.store.assertEditable();
     if (this.store.loadVersion !== loadVersion) throw new Error('文稿已重新加载，请重新插入图片');
     if (this.store.slideId !== slideId) throw new Error('页面已切换，请在目标页面重新插入图片');
@@ -368,6 +417,7 @@ export class SlideEditor {
     await this.importDocument('PDF', signal, async (controller, dialog) => ({
       document: await readPdf(file, {
         password, signal: controller.signal, assetsUrl: this.options.pdfAssetsUrl, limits: importLimits,
+        t: (...args) => this.t(...args),
         onProgress: progress => dialog.progress(progress), onPassword: incorrect => dialog.password(incorrect),
       }), warnings: [],
     }));
@@ -375,6 +425,7 @@ export class SlideEditor {
   async importPptx(file, { signal } = {}) {
     return this.importDocument('PPTX', signal, (controller, dialog) => readPptx(file, {
       signal: controller.signal, onProgress: progress => dialog.progress(progress),
+      t: (...args) => this.t(...args),
     }));
   }
   async importDocument(format, signal, read) {
@@ -387,7 +438,8 @@ export class SlideEditor {
     signal?.addEventListener('abort', abort, { once: true });
     const initialDocument = this.store.doc;
     this.documentImport = controller;
-    const dialog = createImportDialog(this.root, controller, format);
+    const dialog = createImportDialog(this.root, controller, format, (...args) => this.t(...args));
+    this.importDialog = dialog;
     try {
       const result = await read(controller, dialog);
       controller.signal.throwIfAborted();
@@ -395,21 +447,26 @@ export class SlideEditor {
       this.text.stop(); this.exitPresent();
       this.store.setDocument(result.document); this.fit();
       this.showImportWarnings(result.warnings);
-      return { warnings: [...result.warnings] };
+      return { warnings: result.warnings.map(message => this.message(message)) };
     } finally {
       this.abort.signal.removeEventListener('abort', abort);
       signal?.removeEventListener('abort', abort);
       dialog.destroy();
       this.documentImport = null;
+      this.importDialog = null;
+      if (this.localePending) this.refreshLocale();
     }
   }
   showImportWarnings(warnings) {
+    this.importWarnings = [...warnings];
+    const open = this.importNotice?.open || false;
     this.importNotice?.remove(); this.importNotice = null;
     if (!warnings.length) return;
     const notice = dom('details', 'sk-import-notice');
-    const summary = dom('summary', '', '已打开 PPTX · ' + warnings.length + ' 项兼容性说明');
+    const summary = dom('summary', '', this.t('已打开 PPTX · {count} 项兼容性说明', { count: warnings.length }));
     const list = dom('ul');
-    warnings.forEach(message => list.append(dom('li', '', message)));
+    warnings.forEach(message => list.append(dom('li', '', this.message(message))));
+    notice.open = open;
     notice.append(summary, list);
     this.root.insertBefore(notice, this.main);
     this.importNotice = notice;
@@ -450,7 +507,7 @@ export class SlideEditor {
     this.presentation = dom('div', 'sk-presentation');
     this.presentation.tabIndex = 0;
     this.presentation.setAttribute('role', 'dialog');
-    this.presentation.setAttribute('aria-label', '幻灯片放映');
+    this.presentation.setAttribute('aria-label', this.t('幻灯片放映'));
     this.root.classList.add('sk-presenting');
     this.root.append(this.presentation);
     this.renderPresentation();
@@ -465,6 +522,7 @@ export class SlideEditor {
   }
   renderPresentation() {
     if (!this.presentation) return;
+    this.presentation.setAttribute('aria-label', this.t('幻灯片放映'));
     const doc = this.presentationDocument;
     const slides = doc.slides.filter(slide => !slide.hidden);
     const restoreFocus = this.presentation.contains(document.activeElement);
@@ -477,10 +535,10 @@ export class SlideEditor {
     frame.append(slide);
     frame.addEventListener('click', () => this.presentationStep(1));
     const controls = dom('div', 'sk-presentation-controls');
-    controls.append(button('上一页', 'previous', () => this.presentationStep(-1), 'sk-icon-only'),
+    controls.append(button(this.t('上一页'), 'previous', () => this.presentationStep(-1), 'sk-icon-only'),
       dom('span', '', (this.presentationIndex + 1) + ' / ' + slides.length),
-      button('下一页', 'next', () => this.presentationStep(1), 'sk-icon-only'),
-      button('退出放映', 'close', () => this.exitPresent()));
+      button(this.t('下一页'), 'next', () => this.presentationStep(1), 'sk-icon-only'),
+      button(this.t('退出放映'), 'close', () => this.exitPresent()));
     this.presentation.replaceChildren(frame, controls);
     if (restoreFocus) this.presentation.focus({ preventScroll: true });
   }

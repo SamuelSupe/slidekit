@@ -1,5 +1,6 @@
-import { clone, cloneAsset, cloneDocument, createDocument, createElement, emptySlide, uid, validateDocument, validateDocumentInPlace } from './document.js';
+import { clone, cloneAsset, cloneDocument, createDocument, createElement, emptySlide, paragraph, uid, validateDocument, validateDocumentInPlace } from './document.js';
 import { History } from './history.js';
+import { createTranslator, translateMessage } from './i18n.js';
 
 function removeUnusedAssets(doc) {
   const used = new Set(doc.slides.flatMap(slide => slide.elements.filter(element => element.type === 'image').map(element => element.assetId)));
@@ -8,8 +9,13 @@ function removeUnusedAssets(doc) {
 }
 
 export class DocumentStore {
-  constructor(doc = createDocument(), mode = 'edit') {
+  constructor(doc, mode = 'edit', t = createTranslator()) {
     if (!['edit', 'view'].includes(mode)) throw new Error('模式必须是 edit 或 view');
+    this.t = t;
+    if (doc === undefined) {
+      doc = createDocument(t('未命名演示文稿'));
+      doc.slides[0].name = t('幻灯片 {number}', { number: 1 });
+    }
     this.doc = removeUnusedAssets(validateDocument(doc));
     this.mode = mode;
     this.slideId = this.doc.slides[0].id;
@@ -30,7 +36,7 @@ export class DocumentStore {
   emit(event, payload) {
     const failed = error => {
       if (event === 'error') { console.error('SlideKit error handler failed', error); return; }
-      this.emit('error', { error, message: error?.message || String(error), sourceEvent: event });
+      this.emit('error', { error, message: translateMessage(error?.message || String(error), this.t), sourceEvent: event });
     };
     // A host callback must not interrupt a committed edit or later subscribers.
     for (const listener of [...(this.listeners.get(event) || [])]) {
@@ -101,7 +107,7 @@ export class DocumentStore {
     this.commit(doc => Object.assign(doc, clone(patch)), 'document');
   }
   addSlide(properties = {}, index = this.doc.slides.findIndex(slide => slide.id === this.slideId) + 1) {
-    const slide = { ...emptySlide(), ...clone(properties), id: uid(), elements: [] };
+    const slide = { ...emptySlide(this.t('新幻灯片')), ...clone(properties), id: uid(), elements: [] };
     this.commit(doc => doc.slides.splice(Math.max(0, Math.min(doc.slides.length, index)), 0, slide), 'add-slide', null, () => {
       this.slideId = slide.id; this.selected = [];
     });
@@ -112,7 +118,7 @@ export class DocumentStore {
     if (index < 0) throw new Error('页面不存在');
     const slide = clone(this.doc.slides[index]);
     slide.id = uid();
-    slide.name += ' 副本';
+    slide.name = this.t('{name} 副本', { name: slide.name });
     slide.elements.forEach(element => { element.id = uid(); });
     this.commit(doc => doc.slides.splice(index + 1, 0, slide), 'duplicate-slide', null, () => {
       this.slideId = slide.id; this.selected = [];
@@ -134,7 +140,7 @@ export class DocumentStore {
     if (index < 0) throw new Error('页面不存在');
     this.commit(doc => {
       doc.slides.splice(index, 1);
-      if (!doc.slides.length) doc.slides.push(emptySlide('幻灯片 1'));
+      if (!doc.slides.length) doc.slides.push(emptySlide(this.t('幻灯片 {number}', { number: 1 })));
     }, 'delete-slide', null, () => {
       if (this.slideId === id) this.slideId = this.doc.slides[Math.min(index, this.doc.slides.length - 1)].id;
     });
@@ -145,7 +151,7 @@ export class DocumentStore {
     this.commit(doc => doc.slides.splice(index, 0, doc.slides.splice(from, 1)[0]), 'move-slide');
   }
   addElement(type, properties = {}) {
-    const element = createElement(type, properties);
+    const element = createElement(type, type === 'text' ? { content: paragraph(this.t('双击编辑文字')), ...properties } : properties);
     this.commit(doc => doc.slides.find(slide => slide.id === this.slideId).elements.push(element), 'add-element', null, () => {
       this.selected = [element.id];
     });

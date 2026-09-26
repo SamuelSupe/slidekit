@@ -74,7 +74,7 @@
 .slidekit .sk-format .sk-input { background: transparent; height: 29px; min-height: 29px; }
 .slidekit .sk-format .sk-font-family { width: 140px; }
 .slidekit .sk-format .sk-font-size { width: 58px; text-align: center; }
-.slidekit .sk-format select[aria-label="行距"] { width: 62px; margin-left: 7px; }
+.slidekit .sk-format .sk-line-height { width: 62px; margin-left: 7px; }
 .slidekit .sk-text-color { appearance: none; width: 28px; height: 25px; background: transparent; border: 0; padding: 4px; cursor: pointer; }
 .slidekit .sk-text-color::-webkit-color-swatch-wrapper { padding: 0; }
 .slidekit .sk-text-color::-webkit-color-swatch { border: 0; border-radius: 4px; }
@@ -82,7 +82,7 @@
 .slidekit .sk-menu summary { list-style: none; }
 .slidekit .sk-menu summary::-webkit-details-marker { display: none; }
 .slidekit .sk-menu[open] summary { background: #f1f2f7; }
-.slidekit .sk-menu-list { position: absolute; top: calc(100% + 7px); left: 0; min-width: 196px; background: #fff; border: 1px solid var(--sk-border); border-radius: 9px; box-shadow: 0 8px 30px #2026341c; z-index: 50; padding: 5px; }
+.slidekit .sk-menu-list { position: absolute; top: calc(100% + 7px); left: 0; min-width: 196px; width: max-content; max-width: calc(100cqw - 24px); background: #fff; border: 1px solid var(--sk-border); border-radius: 9px; box-shadow: 0 8px 30px #2026341c; z-index: 50; padding: 5px; }
 .slidekit .sk-header-actions .sk-menu-list { left: auto; right: 0; }
 .slidekit .sk-menu-list .sk-button { display: flex; justify-content: flex-start; width: 100%; padding: 9px 11px; }
 .slidekit .sk-main { display: grid; grid-template-columns: 208px minmax(0, 1fr) 254px; flex: 1; min-height: 0; overflow: hidden; }
@@ -135,6 +135,7 @@
 .slidekit .sk-inspector-content { overflow: auto; flex: 1; padding-bottom: 20px; }
 .slidekit .sk-inspector-section { padding: 18px 18px 19px; border-bottom: 1px solid #f0f1f5; }
 .slidekit .sk-inspector-section h3 { margin: 0 0 16px; font-size: 11px; font-weight: 600; color: #717989; letter-spacing: .5px; }
+.slidekit .sk-inspector-section .sk-button, .slidekit .sk-menu-list .sk-button { white-space: normal; text-align: start; }
 .slidekit .sk-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 13px; min-width: 0; }
 .slidekit .sk-field:last-child { margin-bottom: 0; }
 .slidekit .sk-field-label { font-size: 10px; color: #9197a3; }
@@ -150,7 +151,7 @@
 .slidekit .sk-inspector-hint strong { font-size: 12px; font-weight: 500; color: #758094; }
 .slidekit .sk-inspector-hint p { margin: 0; font-size: 11px; line-height: 1.9; }
 .slidekit .sk-shortcuts { display: flex; flex-direction: column; gap: 13px; color: #89909e; font-size: 10px; }
-.slidekit .sk-shortcuts > div { display: flex; justify-content: space-between; align-items: center; }
+.slidekit .sk-shortcuts > div { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .slidekit kbd { font: inherit; color: #a5aab5; }
 .slidekit .sk-element-heading { padding: 18px 18px 0; font-size: 13px; font-weight: 550; }
 .slidekit .sk-note { font-size: 10px; line-height: 1.8; color: #9198a5; margin: 12px 0 0; }
@@ -204,6 +205,7 @@
   .slidekit .sk-document-title { font-size: 12px; }
   .slidekit .sk-header-actions .sk-button { padding: 5px 7px; }
   .slidekit .sk-format { overflow-x: auto; padding-inline: 8px; }
+  .slidekit .sk-title-area { min-width: 0; }
   .slidekit .sk-tools { flex-wrap: wrap; padding-inline: 8px; }
   .slidekit .sk-format > * { flex-shrink: 0; }
   .slidekit .sk-selection-label { display: none; }

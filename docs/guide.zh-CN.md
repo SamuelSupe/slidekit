@@ -2,7 +2,7 @@
 
 [English](guide.md) · 简体中文 · [返回首页](../README.zh-CN.md)
 
-可嵌入的 JavaScript 幻灯片编辑器。原生 DOM / SVG 画布，中文办公界面，结构化富文本，JSON 保存、本地 PPTX/PDF 打开和原生可编辑 PowerPoint 导出。宿主无需 React 或 Vue。
+可嵌入的 JavaScript 幻灯片编辑器。原生 DOM / SVG 画布，五种语言可配置的办公界面，结构化富文本，JSON 保存、本地 PPTX/PDF 打开和原生可编辑 PowerPoint 导出。宿主无需 React 或 Vue。
 
 ## 开始使用
 
@@ -20,7 +20,7 @@ npm test          # 文档、历史、几何和 PPTX 边界测试
 npm run build    # dist/ ESM、IIFE、CSS、类型声明
 npm run build:demo # 完整静态站点 site/，含打包产物接入示例
 npm run preview  # 在 5183 端口预览 site/ 静态产物
-npm pack         # local-slidekit-0.1.1.tgz；包含构建产物及示例
+npm pack         # local-slidekit-0.2.0.tgz；包含构建产物及示例
 ```
 
 `site/` 可放到任意静态 HTTP(S) 服务，支持子目录部署，无后端服务。请通过 HTTP(S) 打开示例，浏览器不支持用 `file://` 直接加载 ES module。
@@ -28,7 +28,7 @@ npm pack         # local-slidekit-0.1.1.tgz；包含构建产物及示例
 本地包名暂定为 `@local/slidekit`，尚未发布 npm。安装本地 tarball 或项目目录：
 
 ```sh
-npm install /path/to/local-slidekit-0.1.1.tgz
+npm install /path/to/local-slidekit-0.2.0.tgz
 ```
 
 ### npm / ESM
@@ -39,6 +39,7 @@ import '@local/slidekit/style.css';
 
 const editor = createEditor(document.querySelector('#editor'), {
   mode: 'edit',
+  locale: 'zh-CN',
   pdfAssetsUrl: '/slidekit-pdf/',
   theme: { accent: '#5c5bd6' },
   ui: { toolbar: true, thumbnails: true, inspector: true },
@@ -83,6 +84,33 @@ const unsubscribe = editor.on('change', ({ reason }) => {
 
 框架接入：[ReactEditor.jsx](../examples/ReactEditor.jsx)、[VueEditor.vue](../examples/VueEditor.vue)。只需在挂载后创建实例，卸载前调用 `destroy()`；SSR 应在客户端挂载阶段加载。`initialDocument` 仅作为初始值，后续主动加载使用 `setDocument()`，不要在每次 `change` 后回写同一份文稿，否则会清空历史。
 
+## 界面语言
+
+| `locale` | 语言 |
+| --- | --- |
+| `zh-CN` | 简体中文（默认） |
+| `zh-TW` | 繁體中文 |
+| `en` | English · 英文 |
+| `ko` | 한국어 · 韩文 |
+| `ja` | 日本語 · 日文 |
+
+```js
+const editor = createEditor(container, { locale: 'en' });
+editor.setLocale('ja');
+console.log(editor.getLocale()); // 'ja'
+// 普通 script：SlideKit.createEditor(container, { locale: 'ko' });
+```
+
+`SUPPORTED_LOCALES` 导出以上五种代码的冻结数组，`EditorLocale` 提供对应的类型。代码严格区分大小写，不支持的值会抛出 `TypeError`，不会挂载或改变现有实例。库默认使用 `zh-CN`，不自动跟随浏览器语言，不修改宿主页语言。
+
+语言属于编辑器实例，不写入文稿 JSON。同页实例可分别配置语言。切换会更新工具栏、侧栏、无障碍标签、提示、导入对话框和兼容性说明，保留当前页面、选区、文本草稿、缩放模式、只读模式、面板显示和撤销记录，不产生文稿 `change` 事件。已有标题、页面名称、文字及图片文件名保持原样；新建空白页名称、复制后缀和文字占位内容采用当时的界面语言。独立调用 `createDocument()`／`createElement()` 仍保留原有中文默认内容，需要时请显式传入。
+
+为保护表单输入和输入法组合文字，正在编辑的标题／属性输入框会在失焦、完成原生输入后更新控件。导入过程中，对话框立即切换，周围控件在导入结束或取消后刷新；画布上的文本编辑节点不会因切换语言被重建。系统文件选择器等浏览器原生界面使用浏览器／操作系统语言。
+
+`error` 事件的 `message` 和 `importPptx()` 返回的兼容性说明会翻译已知库内诊断。原始 `error` 对象及直接抛出／拒绝的校验异常保留原始信息，未知浏览器或宿主错误原样传递；不要依赖翻译后的文案判断错误类型。
+
+演示页右下角可切换语言，并写入 `?locale=ja` 等 URL 参数，刷新后继续使用；无效的 URL 语言回退到 `zh-CN`。React／Vue 示例接受响应式 `locale` 属性，通过 `setLocale()` 更新，无需销毁重挂。示例文稿及接入页宿主按钮属于示例内容，不随编辑器翻译。
+
 ## 编辑能力
 
 - 幻灯片新增、复制、删除、拖动排序，隐藏/取消隐藏、背景色，16:9 / 4:3 页面比例。
@@ -106,7 +134,7 @@ const unsubscribe = editor.on('change', ({ reason }) => {
 const editor = createEditor(container, options);
 ```
 
-`options`：`document` 初始文稿，`mode` 为 `'edit' | 'view'`，`theme.accent` 为六位十六进制颜色，`ui.toolbar / thumbnails / inspector` 控制初始面板显示，`pdfAssetsUrl` 指定宿主部署的 PDF 资源目录，`pdfLimits` 设置 PDF 导入上限。一个容器可包含编辑器以外的内容，`destroy` 仅移除本实例创建的 DOM。
+`options`：`document` 初始文稿，`mode` 为 `'edit' | 'view'`，`locale` 指定界面语言（默认 `zh-CN`），`theme.accent` 为六位十六进制颜色，`ui.toolbar / thumbnails / inspector` 控制初始面板显示，`pdfAssetsUrl` 指定宿主部署的 PDF 资源目录，`pdfLimits` 设置 PDF 导入上限。一个容器可包含编辑器以外的内容，`destroy` 仅移除本实例创建的 DOM。
 
 | 方法 | 语义 |
 | --- | --- |
@@ -126,6 +154,7 @@ const editor = createEditor(container, options);
 | `addImage(fileOrBlob, properties?)` | 异步嵌入图片并返回元素 ID；支持 PNG/JPEG/WebP。若等待期间切页、切为只读或销毁则拒绝 |
 | `selectElements(ids)` | 设置当前页的选择，过滤不存在的 ID |
 | `undo()` / `redo()` | 文档级撤销重做，覆盖文本、元素、页面操作 |
+| `getLocale()` / `setLocale(locale)` | 读取／切换本实例界面语言，保留文稿、选区、文本草稿与历史 |
 | `setMode('edit' \| 'view')` | 切换模式并结束文本会话；只读禁止文档修改，但可加载、翻页、保存、导出、放映 |
 | `present()` / `exitPresent()` | 开启/关闭放映；播放启动时的文稿快照，只播放可见页，全部隐藏时提示并不启动；无全屏权限时使用页面内放映 |
 | `exportPptx()` | 返回 `Promise<Blob>`，包含正在编辑的文字；不自动下载 |
@@ -204,7 +233,11 @@ editor.updateElement(shapeId, {
 
 ## 保存、放映与导出
 
-库不上传文稿，也不自动持久化；PDF 打开时会从宿主加载解析资源。宿主订阅 `change` 后保存 JSON；演示页的 IndexedDB 防抖保存见源码中的 `demo/persistence.js` 和 `demo/main.js`。自动保存可能受浏览器配额、隐私模式和页面强制关闭影响。
+库不上传文稿，也不自动持久化；PDF 打开时会从宿主加载解析资源。宿主订阅 `change` 后保存 JSON；演示页的 IndexedDB 防抖保存见源码中的 `demo/persistence.js` 和 `demo/main.js`，组合输入中的草稿也会触发自动保存。
+
+自动恢复失败时，演示页保留原存档并暂停自动保存。每次写入在同一事务中检查存档版本：其他新版标签页已经保存时，旧标签页拒绝覆盖，并提示先导出 JSON、再重新加载；不会自动合并并发编辑。升级后请重新加载已有演示标签页，使所有写入方都启用冲突保护。
+
+仍有未保存内容时，演示页请求浏览器离开确认。浏览器配额、隐私模式、强制关闭及浏览器策略仍可能阻止保存或抑制确认提示；浏览器存储不等于备份，重要文稿请导出 JSON。
 
 编辑器加载或修改文稿时清理没有任何页面引用的图片资源；`getDocument()`、JSON 下载和自动保存只包含仍在使用的图片。共用图片在最后一个引用删除后清理，撤销历史独立保留恢复所需的资源。旧 JSON 中的孤立资源也会在加载后移除；需要保留的图片应由页面元素引用。
 
@@ -288,4 +321,4 @@ await editor.importPdf(file, { limits: { maxRenderedSizeMB: 1000 } });
 
 JSON 保留原始文字。PPTX 导出会把 XML 1.0 无法表达的控制字符和孤立代理码替换为 `�`，保留合法 Unicode、换行和中文，避免生成需要修复的 XML。
 
-单个 PPTX XML/SVG 引用资源最多 16 MiB，其余单资源最多 64 MiB，组合对象最多嵌套 16 层。演示页的 IndexedDB 不提供多标签并发编辑协调。
+单个 PPTX XML/SVG 引用资源最多 16 MiB，其余单资源最多 64 MiB，组合对象最多嵌套 16 层。演示页会拒绝陈旧存档写入，不提供多标签内容合并或协同编辑。

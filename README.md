@@ -21,7 +21,7 @@ English · [简体中文](README.zh-CN.md)
 
 [![SlideKit running in Chrome: slide thumbnails, canvas, formatting toolbar and inspector](docs/images/editor-v0.1.1.png)](docs/images/editor-v0.1.1.png)
 
-*SlideKit v0.1.1 captured in desktop Chrome using the included sample deck. Click the screenshot to view it at full size. The editor UI is currently Chinese; documentation is available in English and Chinese.*
+*SlideKit v0.1.1 captured in desktop Chrome using the included sample deck. Click the screenshot to view it at full size. The screenshot uses Simplified Chinese. The current UI also supports Traditional Chinese, English, Korean and Japanese; documentation is available in English and Chinese.*
 
 ## Build presentations inside your product
 
@@ -51,10 +51,10 @@ Open **http://localhost:5182**. Use `npm run build:demo` and `npm run preview` t
 
 ### Embed the library
 
-Download `local-slidekit-0.1.1.tgz` from [Releases](https://github.com/SamuelSupe/slidekit/releases/latest), then install it:
+Download `local-slidekit-0.2.0.tgz` from [Releases](https://github.com/SamuelSupe/slidekit/releases/latest), then install it:
 
 ```sh
-npm install ./local-slidekit-0.1.1.tgz
+npm install ./local-slidekit-0.2.0.tgz
 ```
 
 The package name is `@local/slidekit`; it is **not published to the npm registry**.
@@ -63,7 +63,7 @@ The package name is `@local/slidekit`; it is **not published to the npm registry
 import { createEditor, paragraph } from '@local/slidekit';
 import '@local/slidekit/style.css';
 
-const editor = createEditor(document.querySelector('#editor'));
+const editor = createEditor(document.querySelector('#editor'), { locale: 'en' });
 editor.addElement('text', {
   content: paragraph('Make room for your next idea.'),
   x: 96, y: 96, width: 900, height: 140, fontSize: 44,
@@ -82,6 +82,10 @@ Give the container a size, for example `<div id="editor" style="height:720px"></
 Using a plain HTML page? Include `dist/slidekit.css` and `dist/slidekit.iife.js`, then call `SlideKit.createEditor(container)`. [ESM](examples/esm.html), [plain script](examples/iife.html), [React](examples/ReactEditor.jsx) and [Vue](examples/VueEditor.vue) examples are included.
 
 **PDF in a bundled host:** copy `dist/pdf-assets/` to a public directory and set `pdfAssetsUrl`. Direct script/ESM deployments should keep the complete `dist/` tree together. [Details →](docs/guide.md#pdf-assets)
+
+### Interface languages
+
+Configure `locale` as `zh-CN` (default), `zh-TW`, `en`, `ko` or `ja`. Call `editor.setLocale('ja')` to switch an existing instance and `editor.getLocale()` to read its language. The demo has a language selector; ESM and IIFE examples demonstrate two independent languages. Changing the UI language preserves slide content and undo history. See [language configuration](docs/guide.md#interface-languages).
 
 ## Know the boundaries
 

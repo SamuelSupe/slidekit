@@ -137,7 +137,7 @@ export class RichTextSession {
         GradientText,
       ],
       editorProps: {
-        attributes: { class: 'sk-text-input', 'aria-label': '编辑幻灯片文字', spellcheck: 'false' },
+        attributes: { class: 'sk-text-input', 'aria-label': this.owner.t('编辑幻灯片文字'), spellcheck: 'false' },
         handleDOMEvents: {
           compositionstart: () => { this.composing = true; return false; },
           compositionend: () => {

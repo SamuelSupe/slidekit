@@ -1,4 +1,5 @@
 import { createDocument, createElement, emptySlide, MAX_SLIDES, uid, validateDocument } from './document.js';
+import { createTranslator } from './i18n.js';
 
 const MB = 1024 * 1024;
 /** @type {Readonly<Required<import('./types.js').PdfLimits>>} */
@@ -42,10 +43,10 @@ export function pdfPageLayout(width, height, pageSize) {
 /**
  * Render locally; the caller replaces its document only after every page succeeds.
  * @param {File | Blob} file
- * @param {{password?: string, signal?: AbortSignal, assetsUrl?: string, limits?: import('./types.js').PdfLimits, onProgress?: (progress: {page: number, total: number}) => void, onPassword?: (incorrect: boolean) => string | Promise<string>}} [options]
+ * @param {{password?: string, signal?: AbortSignal, assetsUrl?: string, limits?: import('./types.js').PdfLimits, onProgress?: (progress: {page: number, total: number}) => void, onPassword?: (incorrect: boolean) => string | Promise<string>, t?: ReturnType<typeof createTranslator>}} [options]
  * @returns {Promise<import('./types.js').Deck>}
  */
-export async function readPdf(file, { password, signal, assetsUrl, limits: customLimits, onProgress, onPassword } = {}) {
+export async function readPdf(file, { password, signal, assetsUrl, limits: customLimits, onProgress, onPassword, t = createTranslator() } = {}) {
   const limits = resolvePdfLimits(customLimits);
   if (!(file instanceof Blob) || !file.size) throw new Error('请选择有效的 PDF 文件');
   if (file.size > limits.maxFileSizeMB * MB) throw new Error('PDF 文件为 ' + sizeInMB(file.size) + ' MB，超过当前 ' + limits.maxFileSizeMB + ' MB 上限');
@@ -69,8 +70,8 @@ export async function readPdf(file, { password, signal, assetsUrl, limits: custo
       if (!signal?.aborted) update(value);
     }).catch(abort);
   };
-  const name = (file.name || 'PDF 文稿').replace(/\.pdf$/i, '').slice(0, 500);
-  const doc = createDocument(name || 'PDF 文稿');
+  const name = (file.name || t('PDF 文稿')).replace(/\.pdf$/i, '').slice(0, 500);
+  const doc = createDocument(name || t('PDF 文稿'));
   doc.slides = [];
   let imageBytes = 0;
   try {
@@ -97,7 +98,7 @@ export async function readPdf(file, { password, signal, assetsUrl, limits: custo
         if (imageBytes > limits.maxRenderedSizeMB * MB) throw new Error('PDF 渲染到第 ' + index + ' 页累计 ' + sizeInMB(imageBytes) + ' MB 图像数据，超过当前 ' + limits.maxRenderedSizeMB + ' MB 上限，请拆分或提高导入上限');
         const assetId = uid();
         doc.assets[assetId] = { data: dataUrl, width: canvas.width, height: canvas.height, name: name + '-' + index + '.png' };
-        const slide = emptySlide('PDF 第 ' + index + ' 页');
+        const slide = emptySlide(t('PDF 第 {page} 页', { page: index }));
         const { x, y, width, height } = layout;
         slide.elements.push(createElement('image', { assetId, x, y, width, height, fit: 'contain', locked: true }));
         doc.slides.push(slide);

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import JSZip from 'jszip';
 import { writeFile } from 'node:fs/promises';
+import { spawnSync } from 'node:child_process';
 import { createDocument, createElement, paragraph, validateDocument } from '../src/document.js';
 import { DocumentStore } from '../src/store.js';
 import { alignElements, boundingBox, distributeElements } from '../src/geometry.js';
@@ -15,12 +16,85 @@ import { plainText } from '../src/document.js';
 import { at, children } from '../src/pptx-package.js';
 import { normalizeText, RichTextSession } from '../src/rich-text.js';
 import { SlideEditor } from '../src/editor.js';
+import { createTranslator, translateMessage, SUPPORTED_LOCALES } from '../src/i18n.js';
 
 globalThis.DOMParser = DOMParser;
 globalThis.XMLSerializer = XMLSerializer;
 
 const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=';
 const image = { data: png, width: 1, height: 1, name: 'pixel.png' };
+
+test('locale changes affect new defaults without changing documents or another instance', () => {
+  let t = createTranslator('en');
+  const first = new DocumentStore(undefined, 'edit', (...args) => t(...args));
+  const second = new DocumentStore(undefined, 'edit', createTranslator('ja'));
+  first.addElement('text', { content: paragraph('打开 / 열기 / 開く / Open') });
+  const before = first.getDocument();
+  const other = second.getDocument();
+  t = createTranslator('ko');
+  assert.deepEqual(first.getDocument(), before);
+  first.addSlide();
+  const id = first.addElement('text');
+  assert.equal(first.slide.name, t('新幻灯片'));
+  assert.equal(plainText(first.elements[0].content), t('双击编辑文字'));
+  first.undo(); first.undo();
+  assert.deepEqual(first.getDocument(), before);
+  first.redo(); first.redo();
+  assert.equal(first.elements[0].id, id);
+  assert.deepEqual(second.getDocument(), other);
+  let reported;
+  first.on('change', () => { throw new Error('页面不存在'); });
+  first.on('error', payload => { reported = payload; });
+  first.addSlide();
+  assert.equal(reported.message, t('页面不存在'));
+  assert.equal(reported.error.message, '页面不存在');
+  assert.equal(reported.sourceEvent, 'change');
+  for (const locale of SUPPORTED_LOCALES) {
+    const translate = createTranslator(locale);
+    const store = new DocumentStore(undefined, 'edit', translate);
+    assert.equal(store.doc.title, translate('未命名演示文稿'));
+    const title = store.slide.name;
+    store.duplicateSlide();
+    assert.equal(store.slide.name, translate('{name} 副本', { name: title }));
+  }
+  assert.throws(() => createTranslator('fr'), TypeError);
+  assert.throws(() => createTranslator('toString'), TypeError);
+});
+
+test('localized diagnostics retain filenames and recursively translate known parser messages', async () => {
+  const t = createTranslator('en');
+  const invalid = createDocument(); invalid.width = -1;
+  assert.throws(() => validateDocument(invalid), error => {
+    assert.equal(translateMessage(error.message, t), 'Invalid Slide width');
+    return true;
+  });
+  const filename = 'ppt/media/打开-logo{1}.svg';
+  const warning = '第 2 页：打开（ppt/slides/slide2.xml）：SVG ' + filename + '：SVG 内容无效，已跳过';
+  assert.equal(translateMessage(warning, t), 'Slide 2: 打开 (ppt/slides/slide2.xml): SVG ' + filename + ': Invalid SVG content; skipped');
+  assert.equal(translateMessage(warning, createTranslator()), warning);
+  assert.equal(translateMessage('图片关系 rId1 缺失；图片关系 rId2 缺失', t), 'Image relationship rId1 is missing; Image relationship rId2 is missing');
+  await assert.rejects(readPdf(new Blob([new Uint8Array(1024 * 1024)]), { limits: { maxFileSizeMB: 0.5 } }), error => {
+    assert.equal(translateMessage(error.message, t), 'The PDF is 1 MB, exceeding the current 0.5 MB limit');
+    return true;
+  });
+  assert.equal(translateMessage('Host-specific failure: 123', t), 'Host-specific failure: 123');
+  assert.equal(translateMessage('宿主错误：原样保留', t), '宿主错误：原样保留');
+  // Bound this regression outside the test runner: a failed wildcard match
+  // previously blocked the main thread for seconds with a 25,000-character ID.
+  const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
+    import assert from 'node:assert/strict';
+    import { createTranslator, translateMessage } from ${JSON.stringify(new URL('../src/i18n.js', import.meta.url).href)};
+    const id = 'x（y）：'.repeat(50000);
+    for (const locale of ['zh-CN', 'en', 'zh-TW', 'ko', 'ja']) {
+      const t = createTranslator(locale);
+      const message = '图片关系 ' + id + ' 缺失';
+      assert.equal(translateMessage(message, t), t('图片关系 {id} 缺失', { id }));
+      assert.equal(translateMessage(id, t), id);
+    }
+  `], { timeout: 5000, encoding: 'utf8' });
+  assert.ifError(result.error);
+  assert.equal(result.status, 0, result.stderr);
+});
 
 test('PDF pages preserve aspect ratio and mixed orientations fit without clipping', () => {
   const first = pdfPageLayout(600, 800);
@@ -922,7 +996,7 @@ test('pending image insertion cannot leak into a reloaded document with the same
     readAsDataURL() { this.result = png; queueMicrotask(() => this.onload()); }
   };
   const store = new DocumentStore();
-  const owner = { store, text: { stop() {} } };
+  const owner = { store, text: { stop() {} }, t: createTranslator() };
   const file = new Blob(['synthetic decoded image'], { type: 'image/png' });
   const pending = SlideEditor.prototype.addImage.call(owner, file);
   const reloaded = store.getDocument();

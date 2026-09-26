@@ -11,7 +11,16 @@
     <main id="editor"></main>
     <footer class="demo-footer">
       <span><span class="save-dot"></span><span id="save-status" role="status">正在打开文稿…</span></span>
-      <span class="demo-links"><a href="./examples/iife.html" target="_blank">嵌入示例</a><a href="./docs/guide.zh-CN.md" target="_blank">接入文档 ↗</a></span>
+      <span class="demo-links">
+        <select id="locale" aria-label="界面语言">
+          <option value="zh-CN" lang="zh-CN">简体中文</option>
+          <option value="zh-TW" lang="zh-TW">繁體中文</option>
+          <option value="en" lang="en">English</option>
+          <option value="ko" lang="ko">한국어</option>
+          <option value="ja" lang="ja">日本語</option>
+        </select>
+        <a id="examples-link" href="./examples/iife.html" target="_blank">嵌入示例</a><a id="guide-link" href="./docs/guide.zh-CN.md" target="_blank">接入文档 ↗</a>
+      </span>
     </footer>
     <script type="module" src="./demo/main.js"></script>
   </body>

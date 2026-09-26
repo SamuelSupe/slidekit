@@ -1,6 +1,6 @@
 window.mountSlideKitDemo = function ({ createEditor, createDocument, createElement, paragraph }) {
   const root = document.querySelector('#examples');
-  function mountCard(label, accent) {
+  function mountCard(label, accent, locale) {
     const card = document.createElement('section');
     card.className = 'host-card';
     const heading = document.createElement('h2');
@@ -36,7 +36,7 @@ window.mountSlideKitDemo = function ({ createEditor, createDocument, createEleme
         changes + ' 次变更 · 第 ' + mounts + ' 次挂载 · ' + (view ? '只读模式' : '编辑模式');
     }
     function mount() {
-      editor = createEditor(container, { document: saved, theme: { accent }, mode: view ? 'view' : 'edit' });
+      editor = createEditor(container, { document: saved, theme: { accent }, mode: view ? 'view' : 'edit', locale });
       mounts += 1;
       unsubscribe = editor.on('change', () => { changes += 1; describe('文稿已变更'); });
       editor.on('error', ({ message }) => { report.textContent = message; });
@@ -56,10 +56,22 @@ window.mountSlideKitDemo = function ({ createEditor, createDocument, createEleme
     action('销毁并重新挂载', () => {
       saved = editor.getDocument(); unsubscribe(); editor.destroy(); editor.destroy(); mount();
     });
+    const language = document.createElement('select');
+    language.setAttribute('aria-label', label + ' · Interface language');
+    for (const [code, name] of [['zh-CN', '简体中文'], ['zh-TW', '繁體中文'], ['en', 'English'], ['ko', '한국어'], ['ja', '日本語']]) {
+      const option = document.createElement('option');
+      option.value = code; option.lang = code; option.textContent = name;
+      language.append(option);
+    }
+    language.value = locale;
+    language.addEventListener('change', () => {
+      editor.setLocale(language.value); locale = editor.getLocale(); describe();
+    });
+    actions.append(language);
     mount();
     return () => { unsubscribe(); editor.destroy(); };
   }
-  const dispose = [mountCard('实例 A', '#5c5bd6'), mountCard('实例 B', '#167c77')];
+  const dispose = [mountCard('实例 A', '#5c5bd6', 'en'), mountCard('实例 B', '#167c77', 'ja')];
   window.addEventListener('pagehide', event => {
     if (!event.persisted) dispose.forEach(destroy => destroy());
   });

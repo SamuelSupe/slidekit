@@ -4,6 +4,7 @@ import { SlideEditor } from './editor.js';
 export { createDocument, createElement, paragraph, validateDocument } from './document.js';
 export { exportPptx } from './pptx.js';
 export { DEFAULT_PDF_LIMITS } from './pdf.js';
+export { SUPPORTED_LOCALES } from './i18n.js';
 
 /** @typedef {import('./types.js').Deck} Deck */
 /** @typedef {import('./types.js').Slide} Slide */
@@ -12,6 +13,7 @@ export { DEFAULT_PDF_LIMITS } from './pdf.js';
 /** @typedef {import('./types.js').Shadow} Shadow */
 /** @typedef {import('./types.js').TextNode} TextNode */
 /** @typedef {import('./types.js').EditorOptions} EditorOptions */
+/** @typedef {import('./types.js').EditorLocale} EditorLocale */
 /** @typedef {import('./types.js').EditorEvent} EditorEvent */
 /** @typedef {import('./types.js').PdfLimits} PdfLimits */
 /** @typedef {{password?: string, signal?: AbortSignal, limits?: PdfLimits}} PdfImportOptions */
@@ -38,6 +40,8 @@ export { DEFAULT_PDF_LIMITS } from './pdf.js';
  * @property {() => void} undo
  * @property {() => void} redo
  * @property {(mode: 'edit'|'view') => void} setMode
+ * @property {() => EditorLocale} getLocale Returns this instance's interface language.
+ * @property {(locale: EditorLocale) => void} setLocale Changes UI language without changing document content, selection or history. Invalid locales throw before changing the instance.
  * @property {() => Promise<void>} present
  * @property {() => void} exitPresent
  * @property {() => Promise<Blob>} exportPptx
@@ -84,6 +88,8 @@ export function createEditor(container, options = {}) {
     undo: guard(() => editor.undo()),
     redo: guard(() => editor.redo()),
     setMode: guard(mode => { editor.text.stop(); editor.store.setMode(mode); }),
+    getLocale: guard(() => editor.locale),
+    setLocale: guard(locale => editor.setLocale(locale)),
     present: guard(() => editor.present()),
     exitPresent: guard(() => editor.exitPresent()),
     exportPptx: guard(() => editor.exportPptx()),

@@ -6,6 +6,7 @@ import { readColor, readTheme } from './pptx-color.js';
 import { readGradient, readShadow } from './pptx-appearance.js';
 import { pictureChildren, rasterizeSvg, resolvePicture } from './pptx-images.js';
 import { readConnectorPoints } from './pptx-connectors.js';
+import { createTranslator } from './i18n.js';
 
 const identity = [1, 0, 0, 1, 0, 0];
 const px = (node, key, fallback = 0) => numeric(node, key, fallback * EMU_PER_PIXEL) / EMU_PER_PIXEL;
@@ -65,10 +66,10 @@ function base64(bytes) {
 /**
  * Reads supported editable objects locally. Warnings describe fidelity changes.
  * @param {File | Blob} file
- * @param {{signal?: AbortSignal, onProgress?: (progress: {page: number, total: number}) => void}} [options]
+ * @param {{signal?: AbortSignal, onProgress?: (progress: {page: number, total: number}) => void, t?: ReturnType<typeof createTranslator>}} [options]
  * @returns {Promise<{document: import('./types.js').Deck, warnings: string[]}>}
  */
-export async function readPptx(file, { signal, onProgress } = {}) {
+export async function readPptx(file, { signal, onProgress, t = createTranslator() } = {}) {
   const archive = await openPptxPackage(file, signal);
   const rootRelations = await archive.relationships('');
   const presentationPath = [...rootRelations.values()].find(relation => relation.type === 'officeDocument' && !relation.external)?.path;
@@ -77,7 +78,7 @@ export async function readPptx(file, { signal, onProgress } = {}) {
   if (presentation.localName !== 'presentation') throw new Error('请选择 PowerPoint .pptx 文稿');
   const slideIds = children(at(presentation, 'sldIdLst'), 'sldId');
   if (!slideIds.length || slideIds.length > MAX_SLIDES) throw new Error('PPTX 须包含 1–' + MAX_SLIDES + ' 页');
-  const doc = createDocument((file.name || 'PowerPoint 文稿').replace(/\.pptx$/i, '').slice(0, 500));
+  const doc = createDocument((file.name || t('PowerPoint 文稿')).replace(/\.pptx$/i, '').slice(0, 500));
   doc.width = px(at(presentation, 'sldSz'), 'cx'); doc.height = px(at(presentation, 'sldSz'), 'cy');
   if (doc.width < 100 || doc.height < 100 || doc.width > 10000 || doc.height > 10000) throw new Error('PPTX 页面尺寸超出支持范围');
   doc.slides = [];
@@ -90,7 +91,7 @@ export async function readPptx(file, { signal, onProgress } = {}) {
     const relationship = [...(await archive.relationships(path)).values()].find(item => item.type === type && !item.external);
     return relationship ? { path: relationship.path, root: await archive.xml(relationship.path) } : null;
   }
-  async function image(fills, source, mirrored = false, label = '背景图片') {
+  async function image(fills, source, mirrored = false, label = t('背景图片')) {
     const selected = resolvePicture(fills, await archive.relationships(source), archive.has);
     const skip = reason => { warn(label + '（' + source + '）：' + reason + '，已跳过'); return null; };
     if (selected.problem) return skip(selected.problem);
@@ -104,7 +105,7 @@ export async function readPptx(file, { signal, onProgress } = {}) {
     if (type === 'svg') {
       let rendered;
       try { rendered = await rasterizeSvg(bytes, sides, mirrored, signal); }
-      catch (error) { signal?.throwIfAborted(); return skip(path + '：' + error.message); }
+      catch (error) { signal?.throwIfAborted(); return skip('SVG ' + path + '：' + error.message); }
       const assetId = uid();
       doc.assets[assetId] = { ...rendered, name: path.split('/').at(-1).replace(/\.svg$/i, '.png') };
       assets.set(key, assetId);
@@ -146,7 +147,7 @@ export async function readPptx(file, { signal, onProgress } = {}) {
     const themePart = (master && await related(master.path, 'theme')) || await related(presentationPath, 'theme');
     const colorMap = at(root, 'clrMapOvr/overrideClrMapping') || at(layout?.root, 'clrMapOvr/overrideClrMapping') || at(master?.root, 'clrMap');
     const theme = readTheme(themePart?.root, colorMap);
-    const slide = emptySlide(attr(at(root, 'cSld'), 'name') || '幻灯片 ' + pageNumber);
+    const slide = emptySlide(attr(at(root, 'cSld'), 'name') || t('幻灯片 {number}', { number: pageNumber }));
     if (['0', 'false'].includes(attr(root, 'show'))) {
       slide.hidden = true;
       warn('隐藏页面已保留，放映时自动跳过');
@@ -207,7 +208,7 @@ export async function readPptx(file, { signal, onProgress } = {}) {
         const shadow = readShadow(shapeProperties, theme, warn);
         if (Math.abs(matrix[0]*matrix[2]+matrix[1]*matrix[3]) > 0.001) warn('非等比旋转组合的倾斜已简化');
         if (kind === 'pic') {
-          const name = attr(at(node, 'nvPicPr/cNvPr'), 'name') || '图片';
+          const name = attr(at(node, 'nvPicPr/cNvPr'), 'name') || t('图片');
           const picture = await image(pictureChildren(node, 'blipFill'), path, mirrored, name);
           if (picture) add(createElement('image', { ...box, ...picture, ...(shadow ? { shadow } : {}), fit: 'cover' }));
           continue;

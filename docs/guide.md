@@ -12,10 +12,10 @@ npm test
 npm run build       # dist/ library bundles and declarations
 npm run build:demo  # site/ static demo, library and examples
 npm run preview    # http://localhost:5183
-npm pack           # local-slidekit-0.1.1.tgz
+npm pack           # local-slidekit-0.2.0.tgz
 ```
 
-Install the release tarball with `npm install ./local-slidekit-0.1.1.tgz`. The package name is `@local/slidekit`; no npm registry publication is implied. Serve examples over HTTP(S); `file://` cannot load browser ES modules. The static site supports deployment under a subdirectory.
+Install the release tarball with `npm install ./local-slidekit-0.2.0.tgz`. The package name is `@local/slidekit`; no npm registry publication is implied. Serve examples over HTTP(S); `file://` cannot load browser ES modules. The static site supports deployment under a subdirectory.
 
 ### ESM
 
@@ -25,6 +25,7 @@ import '@local/slidekit/style.css';
 
 const editor = createEditor(document.querySelector('#editor'), {
   mode: 'edit',
+  locale: 'en',
   theme: { accent: '#5c5bd6' },
   ui: { toolbar: true, thumbnails: true, inspector: true },
   pdfAssetsUrl: '/slidekit-pdf/',
@@ -68,7 +69,7 @@ See [ReactEditor.jsx](../examples/ReactEditor.jsx) and [VueEditor.vue](../exampl
 
 ## Editor capabilities and shortcuts
 
-The Chinese UI includes slide creation, duplication, deletion, ordering, visibility, backgrounds and 16:9/4:3 page sizes. It supports text selection formatting, paragraph alignment/spacing/lists, images, shapes, gradients, outer shadows and independent fill/stroke alpha.
+The configurable UI includes slide creation, duplication, deletion, ordering, visibility, backgrounds and 16:9/4:3 page sizes. It supports text selection formatting, paragraph alignment/spacing/lists, images, shapes, gradients, outer shadows and independent fill/stroke alpha.
 
 Drag, resize and rotate objects; hold Shift for multi-selection or aspect-preserving resize. Use marquee selection, alignment, equal distribution, snapping, layer order and locks. The canvas supports zoom, fit, read-only mode and presentation.
 
@@ -106,6 +107,7 @@ Shortcuts are scoped to the focused instance and do not override host input cont
 | `addImage(file, properties?)` | Embed PNG/JPEG or convert WebP to PNG; return `Promise<string>` |
 | `selectElements(ids)` | Select existing elements on the current slide |
 | `undo()` / `redo()` | Unified document history; one gesture is one operation |
+| `getLocale()` / `setLocale(locale)` | Read/change this instance’s interface language without changing its document or history |
 | `setMode('edit' \| 'view')` | Change interaction mode without replacing the document |
 | `importPdf(file, options?)` | Convert all pages before replacing the document |
 | `importPptx(file, options?)` | Return `{warnings: string[]}` after loading supported objects |
@@ -114,9 +116,36 @@ Shortcuts are scoped to the focused instance and do not override host input cont
 | `on(event, handler)` | Subscribe; return an unsubscribe function |
 | `destroy()` | Release listeners, observers, controls, pending imports and owned DOM |
 
-`element` exposes the root HTMLElement for host focus/layout integration. The library also exports `createDocument(title?)`, `createElement(type?, properties?)`, `paragraph(text?)`, `validateDocument(doc)`, `exportPptx(doc)` and `DEFAULT_PDF_LIMITS`.
+`element` exposes the root HTMLElement for host focus/layout integration. The library also exports `createDocument(title?)`, `createElement(type?, properties?)`, `paragraph(text?)`, `validateDocument(doc)`, `exportPptx(doc)`, `DEFAULT_PDF_LIMITS` and `SUPPORTED_LOCALES`.
 
-Options: `document`, `mode`, `theme: {accent}`, `ui: {toolbar, thumbnails, inspector}`, `pdfAssetsUrl`, `pdfLimits`. Accent is a six-digit hex color. The three UI fields are booleans; omitted panels are shown.
+Options: `document`, `mode`, `locale`, `theme: {accent}`, `ui: {toolbar, thumbnails, inspector}`, `pdfAssetsUrl`, `pdfLimits`. Accent is a six-digit hex color. The three UI fields are booleans; omitted panels are shown.
+
+### Interface languages
+
+| `locale` | Language |
+| --- | --- |
+| `zh-CN` | 简体中文 · Simplified Chinese (default) |
+| `zh-TW` | 繁體中文 · Traditional Chinese |
+| `en` | English |
+| `ko` | 한국어 · Korean |
+| `ja` | 日本語 · Japanese |
+
+```js
+const editor = createEditor(container, { locale: 'en' });
+editor.setLocale('ja');
+console.log(editor.getLocale()); // 'ja'
+// Plain script: SlideKit.createEditor(container, { locale: 'ko' });
+```
+
+`SUPPORTED_LOCALES` is a frozen array of these five codes; `EditorLocale` is the corresponding exported type. Codes are exact and case sensitive. Unsupported values throw `TypeError` before mounting or changing the instance. The library defaults to `zh-CN` and does not infer language from the browser or change the host page’s language.
+
+Language belongs to the editor instance, not its JSON document. Switching translates controls, accessible labels, notifications, import dialogs and compatibility notes. It preserves the current slide, selection, text draft, zoom mode, read-only mode, panel visibility and history, and does not emit a document `change`. Existing titles, slide names, text and image filenames remain untouched. New blank-slide names, duplicate suffixes and text placeholders use the current locale. Standalone `createDocument()` / `createElement()` retain their original Chinese defaults; supply explicit content when needed.
+
+To protect native form edits and IME, a focused title/property input finishes before its controls are redrawn on blur. During an import, the active dialog switches immediately; the surrounding controls refresh when the import finishes or is cancelled. The document’s contenteditable node is preserved during switching. Native browser dialogs (such as file pickers) follow browser/OS language.
+
+`error` event `message` and `importPptx()` result warnings use the current locale for known library diagnostics. The original `error` object and directly thrown/rejected validation errors retain their original messages; unknown browser or host errors are passed through. Do not branch on translated text.
+
+The demo selector writes `?locale=ja` (or another supported code) to the URL for reloads; invalid URL codes fall back to `zh-CN`. React/Vue examples accept a reactive `locale` prop and call `setLocale()` without remounting the editor. The sample deck and host-example controls are illustrative content, not translated by the editor.
 
 ### Events and failure isolation
 
@@ -193,7 +222,9 @@ Image elements use `assetId` and `fit: 'contain' | 'cover'`. Resources are `{dat
 
 The editor removes resources after their last reference is deleted. History retains images needed for Undo. Snapshots own mutable fields while sharing immutable image strings; thumbnail images load lazily. Unreferenced assets in loaded JSON are pruned.
 
-The library does not persist automatically. The demo uses IndexedDB with debouncing; quota, private browsing and forced closure can prevent saves. Browser storage is not a backup, and the demo does not coordinate concurrent edits between tabs.
+The library does not persist automatically. The demo uses IndexedDB with debouncing, including active composition drafts. Failed recovery pauses auto-save and preserves the existing record. Each save checks the stored revision in the same transaction; if another updated demo tab saved first, the stale tab keeps its local work and asks you to export JSON before reloading. It does not merge concurrent edits. Reload existing demo tabs after upgrading so all writers use these checks.
+
+While changes remain unsaved, the demo requests the browser's leave confirmation. Quota, private browsing, forced closure and browser policies can still prevent saves or suppress this confirmation. Browser storage is not a backup; export important work as JSON.
 
 ## Presentation
 

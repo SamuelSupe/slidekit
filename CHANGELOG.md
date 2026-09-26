@@ -1,5 +1,27 @@
 # Changelog / 变更记录
 
+## 0.2.0 — 2026-09-26
+
+### English
+
+- Configure Simplified Chinese, Traditional Chinese, English, Korean and Japanese UI through `locale`, `getLocale()` and `setLocale()`. Language changes remain independent per instance and preserve document content, selection and history.
+- Localize import dialogs, diagnostics, toolbars, property panels and slideshow controls. Add a demo language selector and reactive React/Vue examples; the document schema remains unchanged.
+- Replace backtracking diagnostic matching with delimiter scanning, preventing long PPTX image references from freezing the editor.
+- Preserve existing browser saves after failed demo recovery and atomically reject stale tab writes. Autosave composition drafts and request browser leave confirmation while changes remain unsaved.
+- Verified with 41 tests, ESM/IIFE and static demo builds, offline package installation, strict consumer types and native Chrome regression checks. See [validation](VALIDATION.md) for scope and limitations.
+
+Upgrade note: reload existing demo tabs so every writer uses the new conflict checks. Export local work as JSON before reloading a tab with a save conflict. The demo does not merge concurrent edits. Native WPS/PowerPoint certification remains outstanding.
+
+### 简体中文
+
+- 通过 `locale`、`getLocale()` 和 `setLocale()` 配置／切换简体中文、繁体中文、英文、韩文及日文界面。各实例语言独立，切换时保留文稿内容、选区与历史。
+- 本地化导入对话框、诊断、工具栏、属性面板和放映控件；增加演示页语言选择器及 React／Vue 响应式示例，文稿结构版本不变。
+- 诊断匹配改为固定分隔符扫描，避免超长 PPTX 图片引用使编辑器卡顿。
+- 演示页恢复失败时保留原存档，原子拒绝旧标签页覆盖新存档；组合输入草稿也触发自动保存，仍有未保存内容时请求浏览器离开确认。
+- 通过 41 项测试、ESM／IIFE 与静态演示构建、离线安装包、严格消费端类型检查及本机 Chrome 回归，范围和限制见[验证记录](VALIDATION.zh-CN.md)。
+
+升级提示：重新加载已有演示标签页，使所有写入方都启用新的冲突保护。存在保存冲突时，先导出当前工作为 JSON 再重新加载。演示页不会合并并发编辑，WPS／PowerPoint 原生验收仍未完成。
+
 ## 0.1.1 — 2026-09-25
 
 ### English

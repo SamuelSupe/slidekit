@@ -21,7 +21,7 @@
 
 [![SlideKit 在 Chrome 中的实际界面：缩略图、画布、文字工具栏和属性面板](docs/images/editor-v0.1.1.png)](docs/images/editor-v0.1.1.png)
 
-*SlideKit v0.1.1 在本机 Chrome 中的实际截图，使用项目自带的示例文稿。点击截图可查看原图。编辑器目前采用中文界面，文档提供中英文版本。*
+*SlideKit v0.1.1 在本机 Chrome 中的实际截图，使用项目自带的示例文稿。点击截图可查看原图。截图使用简体中文。当前界面还支持繁体中文、英文、韩文和日文，文档提供中英文版本。*
 
 ## 在自己的产品里完成演示创作
 
@@ -51,10 +51,10 @@ npm run dev
 
 ### 引入前端库
 
-从 [Releases](https://github.com/SamuelSupe/slidekit/releases/latest) 下载 `local-slidekit-0.1.1.tgz`：
+从 [Releases](https://github.com/SamuelSupe/slidekit/releases/latest) 下载 `local-slidekit-0.2.0.tgz`：
 
 ```sh
-npm install ./local-slidekit-0.1.1.tgz
+npm install ./local-slidekit-0.2.0.tgz
 ```
 
 安装后的包名为 `@local/slidekit`，**尚未发布到 npm registry**。
@@ -63,7 +63,7 @@ npm install ./local-slidekit-0.1.1.tgz
 import { createEditor, paragraph } from '@local/slidekit';
 import '@local/slidekit/style.css';
 
-const editor = createEditor(document.querySelector('#editor'));
+const editor = createEditor(document.querySelector('#editor'), { locale: 'zh-CN' });
 editor.addElement('text', {
   content: paragraph('让好想法，有出色的表达。'),
   x: 96, y: 96, width: 900, height: 140, fontSize: 44,
@@ -82,6 +82,10 @@ const off = editor.on('change', () => {
 普通 HTML 页面可引用 `dist/slidekit.css` 和 `dist/slidekit.iife.js`，然后调用 `SlideKit.createEditor(container)`。仓库包含 [ESM](examples/esm.html)、[普通 script](examples/iife.html)、[React](examples/ReactEditor.jsx) 与 [Vue](examples/VueEditor.vue) 示例。
 
 **打包宿主使用 PDF：**将 `dist/pdf-assets/` 复制到静态目录，并设置 `pdfAssetsUrl`；直接通过 script/ESM 部署时保留完整 `dist/` 目录。[详细说明 →](docs/guide.zh-CN.md#npm--esm)
+
+### 界面语言
+
+`locale` 可配置为 `zh-CN`（默认简体中文）、`zh-TW`（繁体中文）、`en`（英文）、`ko`（韩文）或 `ja`（日文）。使用 `editor.setLocale('ja')` 切换现有实例，`editor.getLocale()` 读取当前语言。演示页提供语言选择器，ESM／IIFE 示例展示两个实例使用不同语言；切换界面语言会保留幻灯片内容与撤销记录。详见[语言配置](docs/guide.zh-CN.md#界面语言)。
 
 ## 明确当前边界
 

@@ -1,5 +1,6 @@
 import { dom } from './render.js';
 import { icon } from './icons.js';
+import { createTranslator } from './i18n.js';
 
 export function button(label, iconName, action, className = '') {
   const node = dom('button', 'sk-button ' + className);
@@ -39,15 +40,15 @@ export function selectInput(options, value, action) {
   select.addEventListener('change', () => action(select.value));
   return select;
 }
-export function colorInput(value, action) {
+export function colorInput(value, action, t = createTranslator()) {
   const wrapper = dom('div', 'sk-color-control');
   const picker = dom('input');
   picker.type = 'color';
   picker.value = value === 'transparent' ? '#ffffff' : value;
-  picker.setAttribute('aria-label', '选择颜色');
+  picker.setAttribute('aria-label', t('选择颜色'));
   const text = dom('input', 'sk-input');
   text.value = value;
-  text.setAttribute('aria-label', '颜色值');
+  text.setAttribute('aria-label', t('颜色值'));
   picker.addEventListener('change', () => { text.value = picker.value; action(picker.value); });
   text.addEventListener('change', () => {
     if (/^#[\da-f]{6}$/i.test(text.value) || text.value === 'transparent') action(text.value);

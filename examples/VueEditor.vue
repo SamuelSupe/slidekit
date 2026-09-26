@@ -1,17 +1,18 @@
 <script setup>
-import { onMounted, onBeforeUnmount, ref } from 'vue';
+import { onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import { createEditor } from '@local/slidekit';
 import '@local/slidekit/style.css';
 
-const props = defineProps({ initialDocument: Object, pdfAssetsUrl: { type: String, default: '/slidekit-pdf/' } });
+const props = defineProps({ initialDocument: Object, locale: { type: String, default: 'zh-CN' }, pdfAssetsUrl: { type: String, default: '/slidekit-pdf/' } });
 const emit = defineEmits(['change']);
 const container = ref(null);
 let editor;
 let off;
 onMounted(() => {
-  editor = createEditor(container.value, { document: props.initialDocument, pdfAssetsUrl: props.pdfAssetsUrl });
+  editor = createEditor(container.value, { document: props.initialDocument, pdfAssetsUrl: props.pdfAssetsUrl, locale: props.locale });
   off = editor.on('change', () => emit('change', editor.getDocument()));
 });
+watch(() => props.locale, locale => editor?.setLocale(locale));
 onBeforeUnmount(() => { off?.(); editor?.destroy(); });
 defineExpose({ getEditor: () => editor });
 </script>
